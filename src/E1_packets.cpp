@@ -16,7 +16,7 @@ uint16_t Fletcher16(uint8_t *data, int count) {
 
 void send_packet(uint8_t id, float value) {
   uint32_t bits = *(uint32_t*)&value;
-  unsigned char packet[9];
+  unsigned char packet[8];
 
   packet[0] = id;
 
@@ -26,23 +26,23 @@ void send_packet(uint8_t id, float value) {
   packet[4] = bits & 0xFF;
 
   uint16_t checksum = Fletcher16(packet, 5);
-  packet[6] = (checksum >> 8) & 0xFF;
-  packet[7] = checksum & 0xFF;
+  packet[5] = (checksum >> 8) & 0xFF;
+  packet[6] = checksum & 0xFF;
 
-  packet[8] = 0xFF;
+  packet[7] = 0xFF;
 
-  Serial6.write(packet, 8);
+  Serial.write(packet, 8);
   Serial.flush();
 }
 
 int main(int argc, char** argv) {
-  Serial6.begin(57600);
+  Serial.begin(57600);
   while(1) {
     send_packet(1, 6859476.00);
     send_packet(2, 6859476.00);
     send_packet(3, 6859476.00);
     send_packet(4, 6859476.00);
-    // Serial6.println("{1,6859476.00,6859476.00,6859476.00,6859476.00|e4f7}");
+    // Serial.println("{1,6859476.00,6859476.00,6859476.00,6859476.00|e4f7}");
     delay(10);
   }
   return 0;
