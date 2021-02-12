@@ -69,7 +69,7 @@ namespace detectEndFlow {
   void detectPeak(float currentPressure, int recordingIndex) {
     if (size>5) {
       float average = findAverage(recordingIndex);
-      if (currentPressure > 1.25 * average) {
+      if (currentPressure > 1.15 * average) {
         //initiate shutdown
         shutdown(recordingIndex);
       }
