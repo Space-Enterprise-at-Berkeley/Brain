@@ -7,6 +7,7 @@
 
 SdFat sd;
 File file;
+int packetCounter = 0;
 struct Queue *sdBuffer;
 union floatArrToBytes farrbconvert;
 
@@ -20,13 +21,13 @@ bool write_to_SD(std::string message, const char * file_name) {
         int initialLength = sdBuffer->length;
         for(int i = 0; i < initialLength; i++) {
           char *msg = sdBuffer->dequeue();
-          file.write(msg);
+          file.write(msg, sizeof(msg)); 
           free(msg);
         }
         file.close();
         return true;
       } else {        //If the file didn't open
-        return false;
+          return false;
       }
     }
     return true;
@@ -64,7 +65,7 @@ String make_packet(int id, bool error) {
   }
   packet_content += check_;
   String packet = "{" + packet_content + "}";
-
+  incrementPacketCounter();
   return packet;
 }
 
@@ -106,6 +107,15 @@ int decode_received_packet(String packet, valveInfo *valve, valveInfo valves[], 
   } else {
     return -1;
   }
+}
+
+void readPacketCounter(float *data) {
+    data[0] = packetCounter;
+    data[1] = -1;
+  }
+
+void incrementPacketCounter() {
+    packetCounter+=1;
 }
 
 /**

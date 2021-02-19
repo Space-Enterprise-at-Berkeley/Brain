@@ -1,4 +1,7 @@
 # All Firmware
+
+![PlatformIO CI](https://github.com/Space-Enterprise-at-Berkeley/Firmware/workflows/PlatformIO%20CI/badge.svg?branch=master)
+
 Contains all microcontroller code for any and all boards we develop.
 See specific dir documentation for more details.
 ## Setup

@@ -14,6 +14,8 @@
 
 #define SERIAL_INPUT 0
 
+#define NO_ADC 0 // temporary fix. TODO (@fazerlicourice7 ): do it properly
+
 #if SERIAL_INPUT
   #define RFSerial Serial
 #else
@@ -36,6 +38,9 @@ sensorInfo *sensor;
 long startTime;
 String packet;
 
+TempController loxPTHeater(10, 2, LOX_ADAPTER_PT_HEATER_PIN); // setPoint = 10 C, alg = PID, heaterPin = 7
+TempController loxGemsHeater(2, 2, LOX_GEMS_HEATER_PIN); // setPoint = 2C, alg = PID
+
 void sensorReadFunc(int id);
 
 void setup() {
@@ -52,15 +57,9 @@ void setup() {
   debug("Initializing Sensor Frequencies", DEBUG);
 
   for (int i = 0; i < numSensors; i++) {
-    debug(String(i), DEBUG);
-    debug("starting 1st line", DEBUG);
     sensor_checks[i][0] = sensors[i].clock_freq;
-    debug("starting 2nd line", DEBUG);
     sensor_checks[i][1] = 1;
   }
-
-  debug("Sensor IDs:", DEBUG);
-  debug(String(sensors[0].name), DEBUG);
 
   debug("Starting SD", DEBUG);
 
@@ -84,8 +83,6 @@ void setup() {
     RFSerial.println(packet);
   }
 
-  // config::setup();
-
   debug("Initializing Libraries", DEBUG);
 
   Solenoids::init(LOX_2_PIN, LOX_5_PIN, LOX_GEMS_PIN, PROP_2_PIN, PROP_5_PIN, PROP_GEMS_PIN, HIGH_SOL_PIN);
@@ -96,13 +93,15 @@ void setup() {
   Thermocouple::Analog::init(numAnalogThermocouples, thermAdcIndices, thermAdcChannels, ads);
   Thermocouple::Cryo::init(numCryoTherms, cryoThermAddrs, cryoTypes);
 
-  tempController::init(10, 2, LOX_ADAPTER_HEATER_PIN); // setPoint = 10 C, alg = PID, heaterPin = 7
+  Automation::init();
+
 }
 
 void loop() {
   // process command
   if (RFSerial.available() > 0) {
     int i = 0;
+
     while (RFSerial.available()) {
       command[i] = RFSerial.read();
       Serial.print(command[i]);
@@ -122,6 +121,27 @@ void loop() {
     }
   }
 
+
+  if (Automation::_eventList->length > 0) {
+    Serial.print(Automation::_eventList->length);
+    Serial.println(" events remain");
+    Automation::autoEvent* e = &(Automation::_eventList->events[0]);
+    if (millis() - Automation::_eventList->timer > e->duration) {
+
+      e->action();
+
+      //Update valve states after each action
+      Solenoids::getAllStates(farrbconvert.sensorReadings);
+      packet = make_packet(29, false);
+      Serial.println(packet);
+      RFSerial.println(packet);
+
+      Automation::removeEvent();
+      //reset timer
+      Automation::_eventList->timer = millis();
+    }
+  }
+
   /*
      Code for requesting data and relaying back to ground station
   */
@@ -136,12 +156,26 @@ void loop() {
     sensorReadFunc(sensor->id);
     packet = make_packet(sensor->id, false);
     Serial.println(packet);
+
     #if SERIAL_INPUT != 1
         RFSerial.println(packet);
-      #endif
+    #endif
     write_to_SD(packet.c_str(), file_name);
+
+      // After getting new pressure data, check injector pressures to detect end of flow:
+  if (sensor->id==1 && Automation::inFlow()){
+
+    float loxInjector = farrbconvert.sensorReadings[2];
+    float propInjector = farrbconvert.sensorReadings[3];
+
+    Automation::detectPeaks(loxInjector, propInjector);
   }
-  // delay(100);
+
+  }
+
+  // For dashboard display
+  delay(50);
+
 }
 
 
@@ -151,22 +185,32 @@ void loop() {
 void sensorReadFunc(int id) {
   switch (id) {
     case 0:
-      Thermocouple::Analog::readTemperatureData(farrbconvert.sensorReadings);
-      farrbconvert.sensorReadings[1] = tempController::controlTemp(farrbconvert.sensorReadings[0]);
+      Thermocouple::Cryo::readSpecificCryoTemp(2, farrbconvert.sensorReadings);
+      farrbconvert.sensorReadings[1] = loxPTHeater.controlTemp(farrbconvert.sensorReadings[0]);
       farrbconvert.sensorReadings[2] = -1;
       break;
     case 1:
-      Ducers::readAllPressures(farrbconvert.sensorReadings);
-      break;
+      #if NO_ADC == 1 // temporary fix. TODO (@fazerlicourice7 ): do it properly
+        break;
+      #else
+        Ducers::readAllPressures(farrbconvert.sensorReadings);
+        break;
+      #endif
+
     case 2:
       batteryMonitor::readAllBatteryStats(farrbconvert.sensorReadings);
       break;
     case 4:
       Thermocouple::Cryo::readCryoTemps(farrbconvert.sensorReadings);
-      //farrbconvert.sensorReadings[1]=0;
-      farrbconvert.sensorReadings[2]=0;
-      farrbconvert.sensorReadings[3]=0;
-      farrbconvert.sensorReadings[4]=-1;
+      break;
+    case 5:
+      readPacketCounter(farrbconvert.sensorReadings);
+      break;
+    case 6:
+      // this hardcoded 3 is kinda sus.
+      Thermocouple::Cryo::readSpecificCryoTemp(3, farrbconvert.sensorReadings);
+      farrbconvert.sensorReadings[1] = loxGemsHeater.controlTemp(farrbconvert.sensorReadings[0]);
+      farrbconvert.sensorReadings[2] = -1;
       break;
     default:
       Serial.println("some other sensor");
