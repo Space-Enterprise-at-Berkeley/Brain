@@ -71,8 +71,7 @@ namespace Ducers {
     while(check){
       if(rawValue > values[index][0]){index++;}
       else if (rawValue < values[0][0]){return 0;}
-
-        check = false;
+      else {check = false;}
       }
       float upperBound = values[index][0];
       float lowerBound = values[index-1][0];
@@ -107,8 +106,8 @@ namespace Ducers {
         data[i] = interpolateLow(_adcs[_adcIndices[i]]->readData(_adcChannels[i]));
         i++;
       } else {
-        // data[i] = interpolateHigh(_adcs[_adcIndices[i]]->readData(_adcChannels[i]));
-        data[i] = _adcs[_adcIndices[i]]->readData(_adcChannels[i]);
+        data[i] = interpolateHigh(_adcs[_adcIndices[i]]->readData(_adcChannels[i]));
+        //data[i] = _adcs[_adcIndices[i]]->readData(_adcChannels[i]);
         i++;
       }
     }
