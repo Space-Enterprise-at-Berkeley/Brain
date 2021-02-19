@@ -71,8 +71,7 @@ namespace Ducers {
     while(check){
       if(rawValue > values[index][0]){index++;}
       else if (rawValue < values[0][0]){return 0;}
-
-        check = false;
+      else {check = false;}
       }
       float upperBound = values[index][0];
       float lowerBound = values[index-1][0];
