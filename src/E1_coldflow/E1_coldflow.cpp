@@ -38,9 +38,6 @@ sensorInfo *sensor;
 long startTime;
 String packet;
 
-TempController loxPTHeater(10, 2, LOX_ADAPTER_PT_HEATER_PIN); // setPoint = 10 C, alg = PID, heaterPin = 7
-TempController loxGemsHeater(2, 2, LOX_GEMS_HEATER_PIN); // setPoint = 2C, alg = PID
-
 void sensorReadFunc(int id);
 
 void setup() {
@@ -89,9 +86,11 @@ void setup() {
   batteryMonitor::init(&Wire, batteryMonitorShuntR, batteryMonitorMaxExpectedCurrent);
 
   Ducers::init(numPressureTransducers, ptAdcIndices, ptAdcChannels, ptTypes, ads);
-  
+
   Thermocouple::Analog::init(numAnalogThermocouples, thermAdcIndices, thermAdcChannels, ads);
   Thermocouple::Cryo::init(numCryoTherms, cryoThermAddrs, cryoTypes);
+
+  //loxPTHeater = new TempController(10, 2, LOX_ADAPTER_PT_HEATER_PIN);
 
   Automation::init();
 
@@ -111,6 +110,11 @@ void loop() {
     debug(String(command), DEBUG);
     int action = decode_received_packet(String(command), &valve, valves, numValves);
     if (action != -1) {
+      if (valve.id == 40) {
+        loxPTHeaterOverrideValue = action;
+      } else if (valve.id == 41) {
+        loxGemsHeaterOverrideValue = action;
+      }
       take_action(&valve, action);
       packet = make_packet(valve.id, false);
       Serial.println(packet);
@@ -174,7 +178,7 @@ void loop() {
   }
 
   // For dashboard display
-  delay(50); 
+  delay(50);
 
 }
 

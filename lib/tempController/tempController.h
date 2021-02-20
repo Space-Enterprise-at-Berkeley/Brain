@@ -19,6 +19,9 @@ class TempController {
     int _heaterPin = 0;
     int _heaterOutput = 0;
 
+    bool humanOverride = false;
+    uint16_t humanSpecifiedValue = 0;
+
     float k_p = 100;
     float k_i = 0.0000001; // low because t is in millis
     float k_d = 1000;
@@ -28,6 +31,8 @@ class TempController {
   public:
     TempController(int tempSetPoint, int algorithmChoice, int heaterPin);
     int calculateOutput(float currTemp);
+    int overwriteControlValue(uint16_t setValue);
+    void confirmationPacket(float *data);
     float controlTemp(float currTemp);
 };
 #endif

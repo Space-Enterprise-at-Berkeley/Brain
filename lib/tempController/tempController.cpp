@@ -28,8 +28,19 @@ int TempController::calculateOutput(float currTemp) {
   }
 }
 
+int TempController::overwriteControlValue(uint16_t setValue) {
+  humanOverride = (setValue == 300);
+  humanSpecifiedValue = setValue;
+}
+
+void TempController::confirmationPacket(float *data){
+  data[0] = humanOverride;
+  data[1] = (humanOverride)? humanSpecifiedValue : -1;
+  data[2] = -1;
+}
+
 float TempController::controlTemp(float currTemp) {
-  _heaterOutput = calculateOutput(currTemp);
+  _heaterOutput = (humanOverride) ? humanSpecifiedValue : calculateOutput(currTemp);
   analogWrite(_heaterPin, _heaterOutput);
-  return ((float)(_heaterOutput) / 255) * 24; // heater runs at 24 V
+  return _heaterOutput;
 }

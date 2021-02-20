@@ -21,7 +21,7 @@ bool write_to_SD(std::string message, const char * file_name) {
         int initialLength = sdBuffer->length;
         for(int i = 0; i < initialLength; i++) {
           char *msg = sdBuffer->dequeue();
-          file.write(msg, sizeof(msg)); 
+          file.write(msg, sizeof(msg));
           free(msg);
         }
         file.close();
@@ -135,13 +135,14 @@ void chooseValveById(int id, valveInfo *valve, valveInfo valves[], int numValves
  * action in solenoids.h
  */
 void take_action(valveInfo *valve, int action) {
-  if (action == 1) {
+  if (action >= 1) {
     valve->openValve();
   } else if (action == 0) {
     valve->closeValve();
   }
-  if(action != -1)
+  if(action != -1) {
     valve->ackFunc(farrbconvert.sensorReadings);
+  }
 }
 
 /*

@@ -130,6 +130,3 @@ extern struct sensorInfo *sensors;
 extern struct valveInfo *valves;
 extern int packetCounter;
 #endif // _COMMON_H_
-
-
-
