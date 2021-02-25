@@ -4,6 +4,7 @@
 */
 
 #include "Automation.h"
+#include "common_fw.h"
 
 using namespace std;
 
@@ -37,7 +38,7 @@ namespace Automation {
   int _shutdownDelays[2] = {0, 750};
 
 
-  float prevPressures[2][5]; //array containing 2 arrays, which contain the previous 5 pressure values of lox, prop, respectively.
+  float prevPressures[2][10]; //array containing 2 arrays, which contain the previous 5 pressure values of lox, prop, respectively.
   int sizes[2]= {0,0};
 
 
@@ -231,10 +232,10 @@ namespace Automation {
   float findAverage(int index) {
     float sum = 0;
     float avg;
-    for (int i=0; i<5; i++) {
+    for (int i=0; i<10; i++) {
       sum += prevPressures[index][i];
     }
-    avg = sum / 5;
+    avg = sum / 10;
     return avg;
   }
 
@@ -244,6 +245,9 @@ namespace Automation {
    *   1 - Propane
    */ 
   void autoShutdown(int index) {
+
+    float *data = farrbconvert.sensorReadings;
+
     Serial.print("Shutting down valve ");
     Serial.println(index);
     if (index == 0) { // Lox is out
@@ -252,6 +256,9 @@ namespace Automation {
         events[0] = {0, &(act_armCloseLox), false};  //TODO @Ben: act_armCloseLox is crashing
         events[1] = {750, &(Solenoids::disarmLOX), false};
         for (int i = 0; i < 2; i++) addEvent(&events[i]);
+        data[0] = 1;
+        data[1] = -1;
+        
 
       } else { // Prop is already closed, shutdown
         _flowing = false;
@@ -261,6 +268,9 @@ namespace Automation {
         events[2] = {750, &(Solenoids::disarmLOX), false};
         events[3] = {0, &(act_openGems), false};
         for (int i = 0; i < 4; i++) addEvent(&events[i]);
+        data[0] = 2;
+        data[1] = -1;
+
       }
     } else { // Prop is out
       if (Solenoids::getProp5()) { // Lox is still open
@@ -268,6 +278,8 @@ namespace Automation {
         events[0] = {0, &(act_armCloseProp), false};
         events[1] = {750, &(Solenoids::disarmLOX)};
         for (int i = 0; i < 2; i++) addEvent(&events[i]);
+        data[0] = 3;
+        data[1] = -1;
 
       } else { // Lox is already closed, shutdown
         _flowing = false;
@@ -277,8 +289,12 @@ namespace Automation {
         events[2] = {750, &(Solenoids::disarmLOX), false};
         events[3] = {0, &(act_openGems), false};
         for (int i = 0; i < 4; i++) addEvent(&events[i]);
+        data[0] = 4;
+        data[1] = -1;
       }
     }
+    String packet = make_packet(7, false);
+    Serial6.println(packet);
       
   }
 
@@ -302,14 +318,14 @@ namespace Automation {
   void detectPeak(float currentPressure, int recordingIndex) {
 
 
-    if (sizes[recordingIndex]==5) {
+    if (sizes[recordingIndex]==10) {
 
       float average = findAverage(recordingIndex);
-      if (currentPressure > 1.20 * average) {
+      if (currentPressure > 1.15 * average) {
 
         Serial.print("Spike detected - "); Serial.print(currentPressure); Serial.print(" vs. avg. "); Serial.println(average);
         Serial.print("[");
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 10; i++) {
           Serial.print(Automation::prevPressures[recordingIndex][i]);
           Serial.print(",");
         }
@@ -319,8 +335,8 @@ namespace Automation {
         autoShutdown(recordingIndex);
       }
       //removing first element of previous Pressures array, adding new Pressure to the end
-      memmove(prevPressures[recordingIndex], prevPressures[recordingIndex] + 1, sizeof(float)*(4));
-      prevPressures[recordingIndex][4] = currentPressure;
+      memmove(prevPressures[recordingIndex], prevPressures[recordingIndex] + 1, sizeof(float)*(9));
+      prevPressures[recordingIndex][9] = currentPressure;
 
       
     } else {

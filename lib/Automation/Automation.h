@@ -43,7 +43,7 @@ namespace Automation {
 
 
   // Endflow Detection
-  extern float prevPressures[2][5]; //array containing 2 arrays, which contain the previous 5 pressure values of lox, prop, respectively.
+  extern float prevPressures[2][10]; //array containing 2 arrays, which contain the previous 5 pressure values of lox, prop, respectively.
   extern int sizes[2];
 
 

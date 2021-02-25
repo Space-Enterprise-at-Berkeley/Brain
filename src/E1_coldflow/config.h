@@ -31,7 +31,7 @@ int thermAdcChannels[numAnalogThermocouples] = {2};
 const int numPressureTransducers = 7;
 int ptAdcIndices[numPressureTransducers] = {0, 0, 0, 0, 1, 1, 1}; //not using 1-0 or 1-3
 int ptAdcChannels[numPressureTransducers] = {0, 1, 2, 3, 2, 1, 3};
-int ptTypes[numPressureTransducers] = {1, 1, 1, 1, 2, 1, 1};
+int ptTypes[numPressureTransducers] = {1, 1, 1, 1, 1, 2, 1};
 
 const uint8_t numSensors = 6;
 sensorInfo *sensors;
@@ -49,8 +49,8 @@ struct valveInfo *valves;
 
 #define HIGH_SOL_PIN 6
 
-#define LOX_ADAPTER_PT_HEATER_PIN 7
-#define LOX_GEMS_HEATER_PIN 8
+#define LOX_ADAPTER_PT_HEATER_PIN 9
+#define LOX_GEMS_HEATER_PIN 7
 
 const float batteryMonitorShuntR = 0.002; // ohms
 const float batteryMonitorMaxExpectedCurrent = 10; // amps

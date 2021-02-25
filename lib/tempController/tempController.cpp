@@ -29,7 +29,7 @@ int TempController::calculateOutput(float currTemp) {
 }
 
 int TempController::overwriteControlValue(uint16_t setValue) {
-  humanOverride = (setValue == 300);
+  humanOverride = (setValue != 300);
   humanSpecifiedValue = setValue;
 }
 
