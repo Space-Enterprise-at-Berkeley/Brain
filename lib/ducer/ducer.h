@@ -100,13 +100,18 @@ namespace Ducers {
   // All the following reads are blocking calls.
   // this function takes ~ _numSensors * 15ms given the data rate of 90
   void readAllPressures(float *data) {
+    Serial.println("readAllPressures");
     int i = 0;
     while (i < _numSensors) {
       int type = _ptTypes[i];
       if (type==1){
+        Serial.println("low");
+        Serial.flush();
         data[i] = interpolateLow(_adcs[_adcIndices[i]].readData(_adcChannels[i]));
         i++;
       } else {
+        Serial.println("high");
+        Serial.flush();
         // data[i] = interpolateHigh(_adcs[_adcIndices[i]]->readData(_adcChannels[i]));
         data[i] = _adcs[_adcIndices[i]].readData(_adcChannels[i]);
         i++;

@@ -90,8 +90,8 @@ void setup() {
 
   Thermocouple::Analog::init(numAnalogThermocouples, thermAdcIndices, thermAdcChannels, ads);
 
-  _cryoTherms = Thermocouple::Cryo();
-  _cryoTherms.init(numCryoTherms, _cryo_boards, cryoThermAddrs, cryoTypes);
+  //_cryoTherms = Thermocouple::Cryo(); //TODO uncomment both
+  //_cryoTherms.init(numCryoTherms, _cryo_boards, cryoThermAddrs, cryoTypes);
 
   Automation::init();
 }
@@ -179,7 +179,7 @@ void loop() {
 void sensorReadFunc(int id) {
   switch (id) {
     case 0:
-      _cryoTherms.readSpecificCryoTemp(2, farrbconvert.sensorReadings);
+      //_cryoTherms.readSpecificCryoTemp(2, farrbconvert.sensorReadings); //TODO uncomment
       farrbconvert.sensorReadings[1] = loxPTHeater.controlTemp(farrbconvert.sensorReadings[0]);
       farrbconvert.sensorReadings[2] = -1;
       break;
@@ -190,14 +190,14 @@ void sensorReadFunc(int id) {
       batteryMonitor::readAllBatteryStats(farrbconvert.sensorReadings);
       break;
     case 4:
-      _cryoTherms.readCryoTemps(farrbconvert.sensorReadings);
+      //_cryoTherms.readCryoTemps(farrbconvert.sensorReadings); //TODO uncomment
       break;
     case 5:
       readPacketCounter(farrbconvert.sensorReadings);
       break;
     case 6:
       // this hardcoded 3 is kinda sus.
-      _cryoTherms.readSpecificCryoTemp(3, farrbconvert.sensorReadings);
+      //_cryoTherms.readSpecificCryoTemp(3, farrbconvert.sensorReadings); //TODO uncomment
       farrbconvert.sensorReadings[1] = loxGemsHeater.controlTemp(farrbconvert.sensorReadings[0]);
       farrbconvert.sensorReadings[2] = -1;
       break;

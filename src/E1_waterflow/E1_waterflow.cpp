@@ -44,8 +44,9 @@ void setup() {
   Serial.begin(57600);
   RFSerial.begin(57600);
 
-  while(!Serial);
-  while(!RFSerial);
+  //while(!Serial);
+  //while(!RFSerial); //TODO uncomment both
+  delay(3000);
 
   debug("Setting up Config");
   config::setup();
@@ -77,14 +78,14 @@ void setup() {
   sdBuffer = new Queue();
 
   std::string start = "beginning writing data";
-  if(!write_to_SD(start, file_name)) { // if unable to write to SD, send error packet
+  //TODO uncomment
+  if(true) {//!write_to_SD(start, file_name)) { // if unable to write to SD, send error packet
     packet = make_packet(101, true);
     RFSerial.println(packet);
     packet_count++;
     debug(String(packet_count));
   }
 
-  // config::setup();
 
   debug("Initializing Libraries");
 
@@ -117,7 +118,7 @@ void loop() {
       #endif
       packet_count++;
       debug(String(packet_count));
-      write_to_SD(packet.c_str(), file_name);
+      //write_to_SD(packet.c_str(), file_name); //TODO uncomment
     }
   }
 
@@ -140,7 +141,7 @@ void loop() {
     #endif
     packet_count++;
     debug(String(packet_count));
-    write_to_SD(packet.c_str(), file_name);
+    //write_to_SD(packet.c_str(), file_name); //TODO uncomment
   }
   delay(50);
 }
