@@ -59,21 +59,6 @@ namespace Automation {
   extern int _shutdownPhase;
   extern uint32_t _shutdownTimer;
 
-
-  /* Delays during startup sequence:
-    1 - Between open pressure and open LOX Main
-    2 - Between open LOX Main and open Prop Main
-    3 - Between open Prop Main and close Main Valve Arm
-  */
-  extern int _startupDelays[3];
-
-  /* Delays during shutdown sequence:
-    1 - Between arm 2-way, close high pressure, close Prop and close LOX
-    2 - Between close LOX and closing Arming valve & opening Gems vent
-  */
-  extern int _shutdownDelays[2];
-
-
   // Endflow Detection
   extern float prevPressures[2][5]; //array containing 2 arrays, which contain the previous 5 pressure values of lox, prop, respectively.
   extern int sizes[2];
@@ -117,6 +102,8 @@ extern struct autoEventList _eventList;
   // Actions that can be taken/combined as desired
   int beginBothFlow();
   int endBothFlow();
+  int beginHotfire();
+  int endHotfire();
 
   int beginHotfire();
   int endHotfire();
@@ -145,6 +132,8 @@ extern struct autoEventList _eventList;
   // int endPropFlow();
   // int openProp();
   // int closeProp();
+
+  int abort();
 
   void flowConfirmation(float *data);
   void flowStatus(float *data);

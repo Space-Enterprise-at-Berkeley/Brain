@@ -29,19 +29,6 @@ namespace Automation {
  struct autoEventList _eventList;
  autoEvent events[maxNumEvents];
 
-  /* Delays during startup sequence:
-    1 - Between open pressure and open LOX Main
-    2 - Between open LOX Main and open Prop Main
-    3 - Between open Prop Main and close Main Valve Arm
-  */
-  int _startupDelays[3] = {1000, 0 ,1000};
-
-  /* Delays during shutdown sequence:
-    1 - Between arm 2-way, close high pressure, close Prop and close LOX
-    2 - Between close LOX and closing Arming valve & opening Gems vent
-  */
-  int _shutdownDelays[2] = {0, 750};
-
   float prevPressures[2][5]; //array containing 2 arrays, which contain the previous 5 pressure values of lox, prop, respectively.
   int sizes[2]= {0,0};
 
@@ -369,7 +356,26 @@ namespace Automation {
 
     _shutdown = false;
 
-    Serial.println("Eureka-1 is secure");
+    return -1;
+  }
+
+  int abort() {
+    _flowing = false;
+    _shutdown = true;
+    Serial.println("Aborting");
+
+    while (_eventList->length > 0) {
+      removeEvent();
+    }
+
+    autoEvent events[3];
+    events[0] = {0, &(act_armCloseProp), false};
+    events[1] = {200, &(act_armCloseLox), false};
+    events[2] = {0, &(act_depressurize), false};
+
+    for (int i = 0; i < 3; i++) addEvent(&events[i]);
+
+    _shutdown = false;
 
     return -1;
   }

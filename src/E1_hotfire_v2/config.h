@@ -87,6 +87,7 @@ HeaterCommand propGemsHeater("Prop Gems Heater", 43, 10, 2, propGemsHeaterPin); 
 AutomationSequenceCommand fullFlow("Perform Flow", 29, &(Automation::beginBothFlow), &(Automation::endBothFlow));
 AutomationSequenceCommand loxFlow("Perform LOX Flow", 30, &(Automation::beginLoxFlow), &(Automation::endLoxFlow));
 AutomationSequenceCommand hotFire("Perform Hotfire", 32, &(Automation::beginHotfire), &(Automation::endHotfire));
+AutomationSequenceCommand Abort("Abort", 33, &(Automation::abort), &(Automation::abort));
 
 const uint8_t numCommands = 16;
 Command *backingStore[numCommands] = {&Solenoids::lox_2,  &Solenoids::lox_5,  &Solenoids::lox_G,
