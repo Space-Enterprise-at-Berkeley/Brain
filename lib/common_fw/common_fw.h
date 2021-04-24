@@ -9,6 +9,7 @@
 
 #include <string>
 #include <cstring>
+#include <sstream>
 
 // Arduino Libraries
 #include <SPI.h>

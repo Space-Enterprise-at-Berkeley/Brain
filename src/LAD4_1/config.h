@@ -1,5 +1,6 @@
 
 #include "common_fw.h"
+#include "realTimeClock.h"
 #include <recovery.h>
 
 #define FLIGHT_BRAIN_ADDR 0x00
@@ -7,8 +8,8 @@
 const uint8_t drogue_pin = 9;
 const uint8_t main_chute_pin = 10;
 
-std::string str_file_name = "LAD4_1.txt";
-const char * file_name = str_file_name.c_str();
+std::string str_file_name;
+const char * file_name;
 
 const uint8_t numSensors = 9;
 sensorInfo sensors[numSensors];
@@ -30,6 +31,10 @@ double mainChuteDeployLoc = 300; // m above start location.
 
 namespace config {
   void setup() {
+    debug("File Name:");
+    str_file_name = "LAD4_1_" + RealTimeClock::getFileTime() + ".txt";
+    file_name = str_file_name.c_str();
+    debug(file_name);
 
     //debug("Initializing sensors", DEBUG);
     // the ordering in this array defines order of operation, not id

@@ -10,6 +10,7 @@
 
 #include <ducer.h>
 #include <batteryMonitor.h>
+#include <realTimeClock.h>
 
 #ifdef SERIAL_INPUT_DEBUG
   #define RFSerial Serial
