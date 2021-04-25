@@ -29,6 +29,12 @@ namespace Ducers {
 
   uint8_t buffer[4];
 
+  int sampleNum;
+  int sampleTaken;
+  float * avgVals;
+  float * calVals;
+  boolean calibrating;
+
   void init (uint8_t numSensors, uint8_t * adcIndices, uint8_t * adcChannels, uint32_t * ptTypes, ADC ** adcs) {
     _numSensors = numSensors;
     _adcIndices = adcIndices;
@@ -36,6 +42,15 @@ namespace Ducers {
     _ptTypes = ptTypes;
     _adcs = adcs;
     _latestReads = (float *)malloc(numSensors);
+
+    sampleNum = 50;
+    sampleTaken = 0;
+    avgVals = (float *) malloc(numSensors);
+    for (int i = 0; i < numSensors; i++) {
+      avgVals[i] = 0;
+    }
+    calVals = (float *) malloc(numSensors * sampleNum);
+    calibrating = false;
 
     for (int i = 0; i < _numSensors; i ++){
       Serial.println(_ptTypes[i]);
@@ -169,10 +184,35 @@ namespace Ducers {
         #endif
         data[i] = interpolate30(_adcs[_adcIndices[i]]->readData(_adcChannels[i]));
       }
+      data[i] += avgVals[i];
       _latestReads[i] = data[i];
+
+      if (calibrating == true && sampleTaken <= sampleNum) {
+        calVals[i * sampleNum + sampleTaken] = data[i];
+      }
     }
+    sampleTaken++;
+
+
+    if (calibrating == true && sampleTaken == sampleNum) {
+      for (int i = 0; j < _numSensors; j++) {
+        int avg = 0;
+        for (int k = 0; k < sampleTaken; k++) {
+          avg += calVals[i * sampleNum + k];
+        }
+        avgVals[i] = avg / sampleNum * -1;
+      }
+      sampleTaken = 0;
+      calibrating = false;
+    }
+
     data[_numSensors] = -1;
   }
+
+  void calibrate() {
+    calibrating = true;
+  }
+
 }
 
 #endif
