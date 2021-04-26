@@ -9,6 +9,7 @@
 #include <Arduino.h>
 #include <ADS1219.h>
 #include <ADS8167.h>
+#include <command.h>
 #include <cmath>
 
 using namespace std;
@@ -195,7 +196,7 @@ namespace Ducers {
 
 
     if (calibrating == true && sampleTaken == sampleNum) {
-      for (int i = 0; j < _numSensors; j++) {
+      for (int i = 0; i < _numSensors; i++) {
         int avg = 0;
         for (int k = 0; k < sampleTaken; k++) {
           avg += calVals[i * sampleNum + k];
@@ -212,6 +213,23 @@ namespace Ducers {
   void calibrate() {
     calibrating = true;
   }
+
+  class DucerCommand : public Command {
+
+    public:
+      DucerCommand(std::string name, uint8_t id);
+        Command(name, id),
+        calibrate()
+      {}
+
+      void parseCommand(float *data) {
+
+      }
+      
+      void confirmation(float *data) {
+
+      }
+  };
 
 }
 
