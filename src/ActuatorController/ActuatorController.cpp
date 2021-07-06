@@ -280,12 +280,16 @@ void sensorReadFunc(int id) {
       }
       break;
     case 4:
-      debug("lin act all states");
+      debug("lin act all channel states");
       LinearActuators::getAllStates(farrbconvert.sensorReadings);
       break;
     case 5:
       debug("packet count");
       readPacketCounter(farrbconvert.sensorReadings);
+      break;
+    case 6:
+      debug("lin act all states");
+      LinearActuators::getAllActuatorStates(farrbconvert.sensorReadings);
       break;
     default:
       Serial.println("some other sensor");

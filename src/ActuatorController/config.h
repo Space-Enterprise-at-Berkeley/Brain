@@ -22,7 +22,7 @@ const float powerSupplyMonitorMaxExpectedCurrent = 5; // amps
 const float actuatorMonitorShuntR = 0.033; // ohms
 
 
-const uint8_t numSensors = 5;
+const uint8_t numSensors = 6;
 sensorInfo sensors[numSensors];
 
 const uint8_t numLinActs = 7;
@@ -139,7 +139,8 @@ namespace config {
     sensors[1] = {"Number Packets Sent", FLIGHT_BRAIN_ADDR, 5, 1};
     sensors[2] = {"Mosfet Current Draw", FLIGHT_BRAIN_ADDR, 1, 1};
     sensors[3] = {"LinAct Current Draw", FLIGHT_BRAIN_ADDR, 3, 1};
-    sensors[4] = {"LinAct States", FLIGHT_BRAIN_ADDR, 4, 1};
+    sensors[4] = {"LinAct Channel States", FLIGHT_BRAIN_ADDR, 4, 1};
+    sensors[5] = {"LinAct States", FLIGHT_BRAIN_ADDR, 6, 1};
 
   }
 }

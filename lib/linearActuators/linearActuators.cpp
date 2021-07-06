@@ -33,6 +33,9 @@ namespace LinearActuators {
 
   LinActCommand * _linActCommands[7] = {&zero, &one, &two, &three, &four, &five, &six};
 
+  uint8_t _allStates[7];
+  uint8_t _prevStates[7];
+
   void init(uint8_t numActuators, uint8_t numPairs, uint8_t * in1Pins, uint8_t * in2Pins, uint8_t * pairIds, uint8_t * commandIds, TwoWire *wire, uint8_t *outputMonAddrs, float shuntR, float maxExCurrent) {
     init(numActuators, numPairs, in1Pins, in2Pins, pairIds, commandIds);
     for (int i = 0; i < _numlinearActuators; i++){
@@ -71,6 +74,13 @@ namespace LinearActuators {
       digitalWrite(_in2Pins[i], _in2PinState[i]);
       _linActCommands[i]->setId(_commandIds[i]);
     }
+
+    for (int i = 0; i < _numlinearActuators; i++) {
+      //setting all states to 0 (closed)
+      _allStates[i] = 0;
+      _prevStates[i] = 0;
+    }
+
   }
 
   /** In 1, In 2, state
@@ -83,11 +93,33 @@ namespace LinearActuators {
    */
   void getAllStates(float *data) {
     #ifdef DEBUG
-      Serial.println("Actuators, get all states");
+      Serial.println("Actuator Channels, get all states");
       Serial.flush();
     #endif
     for (int i = 0; i < _numlinearActuators; i++){
-      data[i] = 2 * _in1PinState[i] + _in2PinState[i];
+      int state = 2 * _in1PinState[i] + _in2PinState[i];
+      data[i] = state;
+      if (state == 0 && _prevStates[i] != 0) {
+        //if previously moving forward, new state is open (1)
+        if (_prevStates[i] == 1) {
+          _allStates[i] = 1;
+        //if previously moving backward, new state is closed (0)
+        } else if (_prevStates[i] == 2) {
+          _allStates[i] = 0;
+        }
+      }
+      _prevStates[i] = state;
+    }
+    data[_numlinearActuators] = -1;
+  }
+
+  void getAllActuatorStates(float *data) {
+    #ifdef DEBUG
+      Serial.println("Actuators, get all states");
+      Serial.flush();
+    #endif
+    for (int i = 0; i < _numlinearActuators; i++) {
+      data[i] = _allStates[i];
     }
     data[_numlinearActuators] = -1;
   }
@@ -112,6 +144,8 @@ namespace LinearActuators {
     if(activatePair) {
       driveForward(_pairIds[actuatorId], false);
     }
+    //setting state to "somewhere in between"
+    _allStates[actuatorId] = 2;
   }
 
   void driveBackward(uint8_t actuatorId, bool activatePair = true) {
@@ -122,6 +156,8 @@ namespace LinearActuators {
     if(activatePair) {
       driveBackward(_pairIds[actuatorId], false);
     }
+    //setting state to "somewhere in between"
+    _allStates[actuatorId] = 2;
   }
 
   void brake(uint8_t actuatorId, bool activatePair = true) {

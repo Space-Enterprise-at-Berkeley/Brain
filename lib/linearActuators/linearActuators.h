@@ -35,6 +35,7 @@ namespace LinearActuators {
   void driveBackward(uint8_t actuatorId, bool activatePair = true);
   void brake(uint8_t actuatorId, bool activatePair = true);
   void switchOff(uint8_t actuatorId, bool activatePair = true);
+  void getAllActuatorStates(float *data);
 
   class LinActCommand : public Command {
 
