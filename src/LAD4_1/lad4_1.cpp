@@ -47,7 +47,7 @@ void setup() {
 
   debug("Initializing Sensor Frequencies");
   for (int i = 0; i < numSensors; i++) {
-    sensor_checks[i][0] = sensors[i].clock_freq;
+    sensor_checks[i][0] = sensors[i].cycle_period;
     sensor_checks[i][1] = 1;
   }
 
@@ -133,10 +133,10 @@ void loop() {
       recoveryPacket();
       delay(300);
 
-      sensors[4].clock_freq = 1;  //GPS Lat Long
-      sensors[5].clock_freq = 1;  //GPS Aux
-      sensors[1].clock_freq = 10; //IMU Orientation
-      sensors[6].clock_freq = 20; //Number Packets
+      sensors[4].cycle_period = 1;  //GPS Lat Long
+      sensors[5].cycle_period = 1;  //GPS Aux
+      sensors[1].cycle_period = 10; //IMU Orientation
+      sensors[6].cycle_period = 20; //Number Packets
 
       Recovery::closeDrogueActuator();
     } else if (detector.drogueReleased() && !detector.mainReleased() && !detector.onGround() && detector.atMainChuteDeployLoc()){

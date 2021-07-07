@@ -55,7 +55,7 @@ void setup() {
   debug("Initializing Sensor Frequencies");
 
   for (int i = 0; i < numSensors; i++) {
-    sensor_checks[i][0] = sensors[i].clock_freq;
+    sensor_checks[i][0] = sensors[i].cycle_period;
     sensor_checks[i][1] = 1;
   }
 
@@ -219,7 +219,7 @@ void loop() {
     // After getting new pressure data, check injector pressures to detect end of flow:
     // Not being used for hotfire
     // if (sensor->id==1 && Automation::inFlow()){
-    //   sensors[8].clock_freq = 0;
+    //   sensors[8].cycle_period = 0;
     //   float loxInjector = farrbconvert.sensorReadings[2];
     //   float propInjector = farrbconvert.sensorReadings[3];
     //

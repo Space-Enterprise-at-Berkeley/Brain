@@ -3,7 +3,7 @@
  * agnostic and can be repeated across different boards and flight hardware.
  * Created by Vainavi Viswanath, Aug 21, 2020.
  */
-#include "common_fw.h"
+#include "common.h"
 
 SdFat sd;
 File file;

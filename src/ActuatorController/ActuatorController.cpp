@@ -53,7 +53,7 @@ void setup() {
   debug("Initializing Sensor Frequencies");
 
   for (int i = 0; i < numSensors; i++) {
-    sensor_checks[i][0] = sensors[i].clock_freq;
+    sensor_checks[i][0] = sensors[i].cycle_period;
     sensor_checks[i][1] = 1;
   }
 
@@ -182,7 +182,7 @@ void loop() {
         LinearActuators::_linActCommands[i]->_off();
         LinearActuators::_linActCommands[i]->endtime = -1;
       }
-      sensors[3].clock_freq = 20;
+      sensors[3].cycle_period = 20;
     }
   }
 
@@ -233,9 +233,9 @@ void sensorReadFunc(int id) {
       // ACSolenoids::getAllCurrentDraw(farrbconvert.sensorReadings);
       // break;
       // if (std::accumulate(farrbconvert.sensorReadings, farrbconvert.sensorReadings + numSolenoids, 0) > 1) {
-      //   sensors[3].clock_freq = 5;
+      //   sensors[3].cycle_period = 5;
       // } else {
-      //   sensors[3].clock_freq = 20;
+      //   sensors[3].cycle_period = 20;
       // }
       debug("heater current draw");
       #ifdef AC1
@@ -274,9 +274,9 @@ void sensorReadFunc(int id) {
       LinearActuators::getAllCurrentDraw(farrbconvert.sensorReadings);
 
       if (std::accumulate(farrbconvert.sensorReadings, farrbconvert.sensorReadings + numLinActs, 0) > 1) {
-        sensors[3].clock_freq = 1;
+        sensors[3].cycle_period = 1;
       } else {
-        sensors[3].clock_freq = 20;
+        sensors[3].cycle_period = 20;
       }
       break;
     case 4:

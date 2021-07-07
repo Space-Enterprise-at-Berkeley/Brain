@@ -1,5 +1,5 @@
 
-#include "common_fw.h"
+#include "common.h"
 #include <recovery.h>
 
 #define FLIGHT_BRAIN_ADDR 0x00

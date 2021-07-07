@@ -7,7 +7,7 @@
 
 
 #include <Cryo_Thermocouple.h>
-#include <common_fw.h>
+#include <common.h>
 
 namespace Thermocouple {
 

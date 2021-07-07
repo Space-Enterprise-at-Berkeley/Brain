@@ -2,7 +2,7 @@
 #include <Analog_Thermocouple.h>
 // #include <Cryo_Thermocouple.h>
 #include <Adafruit_MCP9600.h>
-#include <common_fw.h>
+#include <common.h>
 #include <ADS1219.h>
 #include <ADS8167.h>
 #include <Automation.h>

@@ -1,5 +1,5 @@
 /*
- * common_fw.h- A c++ program that houses the firmware that is reasonably hardware
+ * common.h- A c++ program that houses the firmware that is reasonably hardware
  * agnostic and can be repeated across different boards and flight hardware.
  * Created by Vainavi Viswanath, Aug 21, 2020.
  */
@@ -88,7 +88,7 @@ struct sensorInfo {
   String name;
   int board_address;
   int id;
-  int clock_freq;
+  int cycle_period;
 };
 
 String make_packet (int id, bool error);

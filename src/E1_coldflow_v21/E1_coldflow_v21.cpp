@@ -59,7 +59,7 @@ void setup() {
   debug("Initializing Sensor Frequencies");
 
   for (int i = 0; i < numSensors; i++) {
-    sensor_checks[i][0] = sensors[i].clock_freq;
+    sensor_checks[i][0] = sensors[i].cycle_period;
     sensor_checks[i][1] = 1;
   }
 
