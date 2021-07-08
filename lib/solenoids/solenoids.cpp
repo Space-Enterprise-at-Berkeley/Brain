@@ -29,8 +29,10 @@ namespace Solenoids {
   uint8_t prop5_state = 0;
   uint8_t prop_gems_state = 0;
 
+  float _pressurantSolenoidMonitorShuntR;
+  LTC4151 *_pressurantSolenoidMonitor;
 
-  void init(uint8_t numSolenoids, uint8_t * solenoidPins, uint8_t numCommands, uint8_t * commandIds, uint8_t * outputMonitorAddrs = nullptr) {
+  void init(uint8_t numSolenoids, uint8_t * solenoidPins, uint8_t numCommands, uint8_t * commandIds, uint8_t * outputMonitorAddrs, TwoWire *wire, float shuntR, float maxExpectedCurrent,  LTC4151 *pressurantMonitor, float pressurantSolMonShuntR) {
     lox2_state = 0;
     lox5_state = 0;
     lox_gems_state = 0;
@@ -59,6 +61,8 @@ namespace Solenoids {
     _commandIds = commandIds;
 
     _outputMonitorAddrs = outputMonitorAddrs;
+    _pressurantSolenoidMonitor = pressurantMonitor;
+    _pressurantSolenoidMonitorShuntR = pressurantSolMonShuntR;
 
     pinMode(lox_2_pin, OUTPUT);
     pinMode(lox_5_pin, OUTPUT);
@@ -97,6 +101,14 @@ namespace Solenoids {
     if(_numCommands > 9) {
       high_p_enable.setId(_commandIds[9]);
     }
+
+    lox_2.initINA219(wire, outputMonitorAddrs[0], shuntR, maxExpectedCurrent);
+    lox_5.initINA219(wire, outputMonitorAddrs[1], shuntR, maxExpectedCurrent);
+    lox_G.initINA219(wire, outputMonitorAddrs[2], shuntR, maxExpectedCurrent);
+    prop_2.initINA219(wire, outputMonitorAddrs[3], shuntR, maxExpectedCurrent);
+    prop_5.initINA219(wire, outputMonitorAddrs[4], shuntR, maxExpectedCurrent);
+    prop_G.initINA219(wire, outputMonitorAddrs[5], shuntR, maxExpectedCurrent);
+
   }
 
   void getAllStates(float *data) {
@@ -112,6 +124,38 @@ namespace Solenoids {
     data[5] = prop_gems_state;
     data[6] = high_sol_state;
     data[7] = high_sol_enable_state;
+    data[8] = -1;
+  }
+
+  void getAllCurrents(float *data) {
+    #ifdef DEBUG
+      Serial.println("Solenoids, get all currents");
+      Serial.flush();
+    #endif
+    data[0] = lox_2.outputMonitor.readShuntCurrent();
+    data[1] = prop_2.outputMonitor.readShuntCurrent();
+    data[2] = lox_5.outputMonitor.readShuntCurrent();
+    data[3] = prop_5.outputMonitor.readShuntCurrent();
+    data[4] = lox_G.outputMonitor.readShuntCurrent();
+    data[5] = prop_G.outputMonitor.readShuntCurrent();
+    data[6] = _pressurantSolenoidMonitor->getLoadCurrent(_pressurantSolenoidMonitorShuntR);
+    data[7] = -1;
+    data[8] = -1;
+  }
+
+  void getAllVoltages(float *data) {
+    #ifdef DEBUG
+      Serial.println("Solenoids, get all currents");
+      Serial.flush();
+    #endif
+    data[0] = lox_2.outputMonitor.readBusVoltage();
+    data[1] = prop_2.outputMonitor.readBusVoltage();
+    data[2] = lox_5.outputMonitor.readBusVoltage();
+    data[3] = prop_5.outputMonitor.readBusVoltage();
+    data[4] = lox_G.outputMonitor.readBusVoltage();
+    data[5] = prop_G.outputMonitor.readBusVoltage();
+    data[6] = _pressurantSolenoidMonitor->getADCInVoltage() * 162.7 / 4.7;
+    data[7] = _pressurantSolenoidMonitor->getInputVoltage();
     data[8] = -1;
   }
 

@@ -10,6 +10,7 @@
 #include <Automation.h>
 #include <command.h>
 #include <tempController.h>
+#include <LTC4151.h>
 
 #define FLIGHT_BRAIN_ADDR 0x00
 
@@ -47,9 +48,9 @@ const uint8_t numPressureTransducers = 8;
 uint8_t ptAdcIndices[numPressureTransducers] = {0, 0, 0, 0, 1, 1, 1, 1};
 uint8_t ptAdcChannels[numPressureTransducers] = {0, 1, 2, 3, 4, 5, 6, 7};
 uint32_t ptTypes[numPressureTransducers] = {1000, 1000, 1000, 1000, 5000, 1000, 1000, 1000};
-const uint8_t pressurantIdx = 5;
-const uint8_t loxDomeIdx = 6;
-const uint8_t propDomeIdx = 7;
+const uint8_t pressurantIdx = 4;
+const uint8_t loxDomeIdx = 5;
+const uint8_t propDomeIdx = 6;
 
 // Power Supply Monitors
 const uint8_t numPowerSupplyMonitors = 2;       //12v  , 8v
@@ -59,11 +60,6 @@ INA * powSupMonPointers[numPowerSupplyMonitors];
 
 // Battery Monitor
 uint8_t battMonINAAddr = 0x43;
-
-const float powerSupplyMonitorShuntR = 0.010; // ohms
-const float powerSupplyMonitorMaxExpectedCurrent = 5; // amps
-
-const float actuatorMonitorShuntR = 0.033; // ohms
 
 // GPIO Expander
 const uint8_t numGPIOExpanders = 1;
@@ -75,26 +71,36 @@ GpioExpander heaterCtl(gpioExpAddr[0], gpioExpIntPin[0], &Wire);
 const uint8_t numHeaters = 6;
 uint8_t heaterChannels[numHeaters] = {2, 3, 1, 0, 4, 5};
 uint8_t heaterCommandIds[numHeaters] = {40, 41, 42, 43, 44, 45};
-uint8_t heaterINAAddr[numHeaters] = {0x4B, 0x4C, 0x4A, 0x49, 0x4D, 0x4E};
+uint8_t heaterINAAddrs[numHeaters] = {0x4B, 0x4C, 0x4A, 0x49, 0x4D, 0x4E};
+// uint8_t heaterINAAddr[numHeaters] = {0x42, 0x43};
 
-HeaterCommand loxTankPTHeater("loxTankPTHeater", heaterCommandIds[0], 10, 2, &heaterCtl, heaterChannels[0], &Wire1, heaterINAAddr[0], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
-HeaterCommand loxGemsHeater("loxGemsHeater", heaterCommandIds[1], 10, 2, &heaterCtl, heaterChannels[1], &Wire1, heaterINAAddr[1], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
-HeaterCommand propTankPTHeater("propTankPTHeater", heaterCommandIds[2], 10, 2, &heaterCtl, heaterChannels[2], &Wire1, heaterINAAddr[2], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
-HeaterCommand propGemsHeater("propGemsHeater", heaterCommandIds[3], 10, 2, &heaterCtl, heaterChannels[3], &Wire1, heaterINAAddr[3], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
-HeaterCommand loxInjectorPTHeater("loxInjectorPTHeater", heaterCommandIds[4], 10, 2, &heaterCtl, heaterChannels[4], &Wire1, heaterINAAddr[4], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
-HeaterCommand propInjectorPTHeater("propInjectorPTHeater", heaterCommandIds[5], 10, 2, &heaterCtl, heaterChannels[5], &Wire1, heaterINAAddr[5], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
+HeaterCommand loxTankPTHeater("loxTankPTHeater", heaterCommandIds[0], 10, 2, &heaterCtl, heaterChannels[0], &Wire1, heaterINAAddrs[0], 0.033, 5.0);
+HeaterCommand loxGemsHeater("loxGemsHeater", heaterCommandIds[1], 10, 2, &heaterCtl, heaterChannels[1], &Wire1, heaterINAAddrs[1], 0.033, 5.0);
+HeaterCommand propTankPTHeater("propTankPTHeater", heaterCommandIds[2], 10, 2, &heaterCtl, heaterChannels[2], &Wire1, heaterINAAddrs[2], 0.033, 5.0);
+HeaterCommand propGemsHeater("propGemsHeater", heaterCommandIds[3], 10, 2, &heaterCtl, heaterChannels[3], &Wire1, heaterINAAddrs[3], 0.033, 5.0);
+HeaterCommand loxInjectorPTHeater("loxInjectorPTHeater", heaterCommandIds[4], 10, 2, &heaterCtl, heaterChannels[4], &Wire1, heaterINAAddrs[4], 0.033, 5.0);
+HeaterCommand propInjectorPTHeater("propInjectorPTHeater", heaterCommandIds[5], 10, 2, &heaterCtl, heaterChannels[5], &Wire1, heaterINAAddrs[5], 0.033, 5.0);
 
-const uint8_t numSensors = 12;
+const uint8_t numSensors = 13;
 sensorInfo sensors[numSensors];
 
+// Solenoids
 const uint8_t numSolenoids = 8;   // l2, l5, lg, p2, p5, pg, h, h enable
 uint8_t solenoidPins[numSolenoids] = {5,  3,  1,  4,  2,  0, 6, 39};
 const uint8_t numSolenoidCommands = 10;    //       l2, l5, lg, p2, p5, pg,  h, arm, launch , h enable
 uint8_t solenoidCommandIds[numSolenoidCommands] = {20, 21, 22, 23, 24, 25, 26,  27, 28     , 31};
 uint8_t solenoidINAAddrs[numSolenoids] = {0x40, 0x42, 0x44, 0x41, 0x43, 0x45};
 
+LTC4151 pressurantSolenoidMonitor;
+float pressurantSolMonShuntR = 0.02;
+
 const float batteryMonitorShuntR = 0.002; // ohms
 const float batteryMonitorMaxExpectedCurrent = 10; // amps
+
+const float powerSupplyMonitorShuntR = 0.010; // ohms
+const float powerSupplyMonitorMaxExpectedCurrent = 5; // amps
+
+const float actuatorMonitorShuntR = 0.033; // ohms
 
 AutomationSequenceCommand fullFlow("Perform Flow", 29, &(Automation::beginBothFlow), &(Automation::endBothFlow));
 AutomationSequenceCommand loxFlow("Perform LOX Flow", 30, &(Automation::beginLoxFlow), &(Automation::endLoxFlow));
@@ -109,7 +115,7 @@ CommandArray commands(numCommands, backingStore);
 
 // Automation
 Automation::autoEvent autoEvents[13];
-const int burnTime = 15000;
+const int burnTime = 3000;
 
 namespace config {
   void setup() {
@@ -128,28 +134,12 @@ namespace config {
     debug("Initializing Power Supply monitors");
     for (int i = 0; i < numPowerSupplyMonitors; i++) {
         powerSupplyMonitors[i].begin(&Wire, powSupMonAddrs[i]);
-        powerSupplyMonitors[i].configure(INA219_RANGE_16V, INA219_GAIN_40MV, INA219_BUS_RES_12BIT, INA219_SHUNT_RES_12BIT_1S);
+        powerSupplyMonitors[i].configure(INA219_RANGE_32V, INA219_GAIN_40MV, INA219_BUS_RES_12BIT, INA219_SHUNT_RES_12BIT_1S);
         powerSupplyMonitors[i].calibrate(powerSupplyMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
         powSupMonPointers[i] = &powerSupplyMonitors[i];
     }
 
     debug("initializing cryo therms");
-    /* START SET I2C CLOCK FREQ */
-    // Wire.setClock(85000);
-    #define CLOCK_STRETCH_TIMEOUT 15000
-    IMXRT_LPI2C_t *port = &IMXRT_LPI2C1;
-    port->MCCR0 = LPI2C_MCCR0_CLKHI(55) | LPI2C_MCCR0_CLKLO(59) |
-      LPI2C_MCCR0_DATAVD(25) | LPI2C_MCCR0_SETHOLD(40);
-    port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(2);
-    port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(5) | LPI2C_MCFGR2_FILTSCL(5) |
-      LPI2C_MCFGR2_BUSIDLE(3000); // idle timeout 250 us
-    port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 12 / 256 + 1);
-
-    port->MCCR1 = port->MCCR0;
-    port->MCFGR0 = 0;
-    port->MFCR = LPI2C_MFCR_RXWATER(1) | LPI2C_MFCR_TXWATER(1);
-    port->MCR = LPI2C_MCR_MEN;
-    /* END SET I2C CLOCK FREQ */
     for (int i = 0; i < numCryoTherms; i++) {
 
       if (!_cryo_boards[i].begin(cryoThermAddrs[i], &Wire)) {
@@ -163,39 +153,43 @@ namespace config {
       _cryo_boards[i].enable(true);
     }
 
+    pressurantSolenoidMonitor.init(LTC4151::F, LTC4151::F, &Wire1);
+
     debug("Initializing sensors");
     sensors[0] = {"All Pressure",  FLIGHT_BRAIN_ADDR, 1, 1};
-    sensors[1] = {"Battery Stats", FLIGHT_BRAIN_ADDR, 2, 3};
-    sensors[2] = {"Number Packets Sent", FLIGHT_BRAIN_ADDR, 5, 4*25};
-    sensors[3] = {"Expected Static Pressure", FLIGHT_BRAIN_ADDR, 17, 15};
-    sensors[4] = {"Cryo Temps",      FLIGHT_BRAIN_ADDR, 4, 4 * 15};
-    sensors[5] = {"Lox PT/FTG Temperature",   FLIGHT_BRAIN_ADDR, 0, 4};
-    sensors[6] = {"LOX Gems Temp", FLIGHT_BRAIN_ADDR, 6, 4};
-    sensors[7] = {"LOX Injector Temp", FLIGHT_BRAIN_ADDR, 19, 4};
-    sensors[8] = {"Prop PT/FTG Temp", FLIGHT_BRAIN_ADDR, 16, 4};
-    sensors[9] = {"Prop Gems Temp", FLIGHT_BRAIN_ADDR, 8, 4};
-    sensors[10] = {"Prop Injector Temp", FLIGHT_BRAIN_ADDR, 60, 4};
-    sensors[11] = {"Solenoid currents", FLIGHT_BRAIN_ADDR, 21, 50};
+    sensors[1] = {"Battery Stats", FLIGHT_BRAIN_ADDR, 2, 50};
+    sensors[2] = {"Number Packets Sent", FLIGHT_BRAIN_ADDR, 5, 250};
+    sensors[3] = {"Expected Static Pressure", FLIGHT_BRAIN_ADDR, 17, 99};
+    sensors[4] = {"Cryo Temps",      FLIGHT_BRAIN_ADDR, 4, 104};
+    sensors[5] = {"Lox PT/FTG Temperature",   FLIGHT_BRAIN_ADDR, 0, 96};
+    sensors[6] = {"LOX Gems Temp", FLIGHT_BRAIN_ADDR, 6, 97};
+    sensors[7] = {"LOX Injector Temp", FLIGHT_BRAIN_ADDR, 19, 103};
+    sensors[8] = {"Prop PT/FTG Temp", FLIGHT_BRAIN_ADDR, 16, 102};
+    sensors[9] = {"Prop Gems Temp", FLIGHT_BRAIN_ADDR, 8, 101};
+    sensors[10] = {"Prop Injector Temp", FLIGHT_BRAIN_ADDR, 60, 100};
+    sensors[11] = {"Solenoid currents", FLIGHT_BRAIN_ADDR, 21, 99};
+    sensors[12] = {"Solenoid Volages", FLIGHT_BRAIN_ADDR, 22, 98};
 
 
     // Automation Sequences
     debug("Initializing Ignition Sequence");
-    autoEvents[0] = {1300, &(Automation::act_pressurizeTanks), false};
-    autoEvents[1] = {1000, &(Solenoids::armAll), false}; // igniter
-    autoEvents[2] = {1200, &(Automation::act_armOpenLox), false};
-    autoEvents[3] = {127, &(Automation::act_armOpenProp), false}; // T-0
-    autoEvents[4] = {500, &(Solenoids::disarmLOX), false};
-    autoEvents[5] = {burnTime - 500, &(Automation::act_armCloseProp), false};
-    autoEvents[6] = {200, &(Solenoids::closeLOX), false};
-    autoEvents[7] = {420, &(Automation::act_depressurize), false};
+    autoEvents[0] = {0, &(Automation::act_closeGems), false};
+    autoEvents[1] = {2300, &(Automation::act_pressurizeTanks), false};
+    autoEvents[2] = {1000, &(Solenoids::armAll), false}; // igniter
+    autoEvents[3] = {1200, &(Automation::act_armOpenLox), false};
+    autoEvents[4] = {127, &(Automation::act_armOpenProp), false}; // T-0
+    autoEvents[5] = {500, &(Solenoids::disarmLOX), false};
+    autoEvents[6] = {burnTime - 500, &(Automation::act_armCloseProp), false};
+    autoEvents[7] = {200, &(Solenoids::closeLOX), false};
+    autoEvents[8] = {420, &(Automation::act_depressurize), false};
 
 
     debug("Initializing Shutdown Sequence");
-    autoEvents[8] = {0, &(Automation::act_armCloseProp), false};
-    autoEvents[9] = {200, &(Automation::act_armCloseLox), false};
-    autoEvents[10] = {0, &(Automation::act_depressurize), false};
-    autoEvents[11] = {0, &(Solenoids::disarmLOX), false};
-    autoEvents[12] = {0, &(Solenoids::disarmPropane), false};
+    autoEvents[9] = {0, &(Automation::act_armCloseProp), false};
+    autoEvents[10] = {200, &(Automation::act_armCloseLox), false};
+    autoEvents[11] = {0, &(Automation::act_depressurize), false};
+    autoEvents[12] = {0, &(Solenoids::disarmLOX), false};
+    autoEvents[13] = {0, &(Solenoids::disarmPropane), false};
 
 
     // autoEvents[5] = {300, &(Automation::state_setFlowing), false};

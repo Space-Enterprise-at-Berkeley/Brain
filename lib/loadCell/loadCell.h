@@ -61,22 +61,23 @@ namespace LoadCell {
 		 return 0;
 		}
 
-		void readLoadCells(float *data) {
-
-			for (int i = 0; i < _numSensors; i++) {
-				data[i] = _loadcells[i].get_units() * 0.453592;
-			}
-			data[_numSensors] = data[0] + data[1];
-			data[_numSensors+1] = -1;
-		}
-
 		// void readLoadCells(float *data) {
-		//
-		// 	data[0] = _loadcell_1.get_units() * 0.453592;
-		// 	data[1] = _loadcell_2.get_units() * 0.453592;
-		// 	data[2] = data[0] + data[1];
-		// 	data[3] = -1;
+
+		// 	for (int i = 0; i < _numSensors; i++) {
+		// 		data[i] = _loadcells[i].get_units() * 0.453592;
+		// 	}
+		// 	data[3] = data[0] + data[1];
+		// 	data[_numSensors+1] = -1;
 		// }
+
+		void readLoadCells(float *data) {
+		
+			data[0] = _loadcells[0].get_units() * 0.453592;
+			data[1] = _loadcells[1].get_units() * 0.453592;
+			data[2] = data[0] + data[1];
+			data[3] = _loadcells[2].get_units() * 0.453592;
+			data[4] = -1;
+		}
 
 }
 

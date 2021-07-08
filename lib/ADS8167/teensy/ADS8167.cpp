@@ -16,7 +16,7 @@
 
 #define N_CHANNELS          8
 
-#define _SPI_SPEED          1000000
+#define _SPI_SPEED          14000000
 
 ADS8167::ADS8167(SPIClass *theSPI, uint8_t cs, uint8_t rdy, uint8_t alrt):
   ADC(rdy)

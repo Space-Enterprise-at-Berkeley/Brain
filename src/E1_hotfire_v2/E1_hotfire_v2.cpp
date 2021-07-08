@@ -88,7 +88,7 @@ void setup() {
   debug("Initializing Libraries");
 
   debug("Initializing Solenoids");
-  Solenoids::init(numSolenoids, solenoidPins, numSolenoidCommands, solenoidCommandIds);
+  Solenoids::init(numSolenoids, solenoidPins, numSolenoidCommands, solenoidCommandIds, solenoidINAAddrs, &Wire1, actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
   debug("Initializing battery monitor");
   batteryMonitor::init(&Wire, batteryMonitorShuntR, batteryMonitorMaxExpectedCurrent, battMonINAAddr);
   debug("Initializing power supply monitors");
@@ -160,38 +160,38 @@ void loop() {
   }
 
 
-  if (Automation::_eventList.length > 0) {
-    Serial.print(Automation::_eventList.length);
-    Serial.println(" events remain");
-    Automation::autoEvent* e = &(Automation::_eventList.events[0]);
-    if (millis() - Automation::_eventList.timer > e->duration) {
-
-      e->action();
-
-      //Update valve states after each action
-      Solenoids::getAllStates(farrbconvert.sensorReadings);
-      packet = make_packet(20, false);
-      Serial.println(packet);
-      RFSerial.println(packet);
-      #ifdef ETH
-      sendEthPacket(packet.c_str());
-      #endif
-      write_to_SD(packet.c_str(), file_name);
-
-      Automation::flowStatus(farrbconvert.sensorReadings);
-      packet = make_packet(18, false);
-      Serial.println(packet);
-      RFSerial.println(packet);
-      #ifdef ETH
-      sendEthPacket(packet.c_str());
-      #endif
-      write_to_SD(packet.c_str(), file_name);
-
-      Automation::removeEvent();
-      //reset timer
-      Automation::_eventList.timer = millis();
-    }
-  }
+  // if (Automation::_eventList.length > 0) {
+  //   Serial.print(Automation::_eventList.length);
+  //   Serial.println(" events remain");
+  //   Automation::autoEvent* e = &(Automation::_eventList.events[0]);
+  //   if (millis() - Automation::_eventList.timer > e->duration) {
+  //
+  //     e->action();
+  //
+  //     //Update valve states after each action
+  //     Solenoids::getAllStates(farrbconvert.sensorReadings);
+  //     packet = make_packet(20, false);
+  //     Serial.println(packet);
+  //     RFSerial.println(packet);
+  //     #ifdef ETH
+  //     sendEthPacket(packet.c_str());
+  //     #endif
+  //     write_to_SD(packet.c_str(), file_name);
+  //
+  //     Automation::flowStatus(farrbconvert.sensorReadings);
+  //     packet = make_packet(18, false);
+  //     Serial.println(packet);
+  //     RFSerial.println(packet);
+  //     #ifdef ETH
+  //     sendEthPacket(packet.c_str());
+  //     #endif
+  //     write_to_SD(packet.c_str(), file_name);
+  //
+  //     Automation::removeEvent();
+  //     //reset timer
+  //     Automation::_eventList.timer = millis();
+  //   }
+  // }
 
   /*
      Code for requesting data and relaying back to ground station
@@ -238,7 +238,7 @@ void sensorReadFunc(int id) {
     case 0:
       debug("cryo specific read");
       _cryoTherms.readSpecificCryoTemp(2, farrbconvert.sensorReadings);
-      farrbconvert.sensorReadings[1] = loxPTHeater.controlTemp(farrbconvert.sensorReadings[0]);
+      farrbconvert.sensorReadings[1] = loxTankPTHeater.controlTemp(farrbconvert.sensorReadings[0]);
       farrbconvert.sensorReadings[2] = -1;
       break;
     case 1:
@@ -273,7 +273,7 @@ void sensorReadFunc(int id) {
     case 16:
       debug("propane pt");
       _cryoTherms.readSpecificCryoTemp(1, farrbconvert.sensorReadings);
-      farrbconvert.sensorReadings[1] = propPTHeater.controlTemp(farrbconvert.sensorReadings[0]);
+      farrbconvert.sensorReadings[1] = propTankPTHeater.controlTemp(farrbconvert.sensorReadings[0]);
       farrbconvert.sensorReadings[2] = -1;
       break;
     case 17:

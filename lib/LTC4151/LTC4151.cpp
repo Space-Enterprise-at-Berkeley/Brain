@@ -43,7 +43,6 @@ long LTC4151::readADC(byte reg, byte numOfBytes)
 		l = _wire->read();
 		result = h << 4 | l >> 4;
 	}
-	Serial.println(result);
 
 	return result;
 }
@@ -86,7 +85,7 @@ byte LTC4151::getControlRegister()
 
 double LTC4151::getLoadCurrent(double r)
 {
-	return (readADC(REG_SENSE_H, 2) - readADC(REG_SENSE_L, 2)) * 81.92 / 4096.0 / r;
+	return (readADC(REG_SENSE_H, 2)) * 0.08192 / 4096.0 / r;
 }
 
 double LTC4151::getInputVoltage()

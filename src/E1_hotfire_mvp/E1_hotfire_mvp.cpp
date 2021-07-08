@@ -91,7 +91,7 @@ void setup() {
 
   debug("Initializing Libraries");
 
-  Solenoids::init(numSolenoids, solenoidPins, numSolenoidCommands, solenoidCommandIds, solenoidINAAddrs, &Wire1, actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
+  Solenoids::init(numSolenoids, solenoidPins, numSolenoidCommands, solenoidCommandIds, solenoidINAAddrs, &Wire1, actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent, &pressurantSolenoidMonitor, pressurantSolMonShuntR);
   batteryMonitor::init(&Wire, batteryMonitorShuntR, batteryMonitorMaxExpectedCurrent, battMonINAAddr);
   powerSupplyMonitor::init(numPowerSupplyMonitors, powSupMonPointers, powSupMonAddrs, powerSupplyMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent, &Wire);
 
@@ -127,6 +127,8 @@ void setup() {
 	port->MFCR = LPI2C_MFCR_RXWATER(1) | LPI2C_MFCR_TXWATER(1);
 	port->MCR = LPI2C_MCR_MEN;
   /* END SET I2C CLOCK FREQ */
+
+  Wire1.setClock(400000);
 }
 
 // bool states[8] = {0,0,0,0,0,0,0,0};
@@ -180,17 +182,6 @@ void loop() {
       #endif
       write_to_SD(packet.c_str(), file_name);
     }
-    if (id == 20 ) {
-      int sum = 0;
-        for (int i = 0 ; i < numSolenoids; i++){
-          sum += (int)farrbconvert.sensorReadings[i];
-        }
-        if (sum > 0){
-          sensors[11].clock_freq = 10;
-        } else {
-          sensors[11].clock_freq = 50;
-        }
-    }
     receivedCommand = false;
   }
 
@@ -213,10 +204,10 @@ void loop() {
       #endif
     }
 
-    if (Automation::_autoEventTracker == 8) {
+    if (Automation::_autoEventTracker == 9) {
       Automation::_startup = false;
     }
-    if (Automation::_autoEventTracker == 13) {
+    if (Automation::_autoEventTracker == 14) {
       Automation::_shutdown = false;
       Automation::_autoEventTracker = 0;
     }
@@ -306,9 +297,11 @@ void sensorReadFunc(int id) {
     case 0:
       debug("lox tank pt");
       // these hardcode ids are going to royally fuck us soon
-      Thermocouple::Analog::readSpecificTemperatureData(1, farrbconvert.sensorReadings);
+      farrbconvert.sensorReadings[0] = Thermocouple::Analog::readSpecificTemperatureData(1);
       farrbconvert.sensorReadings[1] = loxTankPTHeater.controlTemp(farrbconvert.sensorReadings[0]); // heater is not used for waterflows.
-      farrbconvert.sensorReadings[2] = -1;
+      farrbconvert.sensorReadings[2] = loxTankPTHeater.readCurrentDraw();
+      farrbconvert.sensorReadings[3] = loxTankPTHeater.readBusVoltage();
+      farrbconvert.sensorReadings[4] = -1;
       break;
     case 1:
       debug("Ducers");
@@ -331,21 +324,27 @@ void sensorReadFunc(int id) {
       break;
     case 6:
       debug("lox gems");
-      Thermocouple::Analog::readSpecificTemperatureData(0, farrbconvert.sensorReadings);
+      farrbconvert.sensorReadings[0] = Thermocouple::Analog::readSpecificTemperatureData(0);
       farrbconvert.sensorReadings[1] = loxGemsHeater.controlTemp(farrbconvert.sensorReadings[0]); // heater is not used for waterflows.
-      farrbconvert.sensorReadings[2] = -1;
+      farrbconvert.sensorReadings[2] = loxGemsHeater.readCurrentDraw();
+      farrbconvert.sensorReadings[3] = loxGemsHeater.readBusVoltage();
+      farrbconvert.sensorReadings[4] = -1;
       break;
     case 8:
       debug("prop gems");
-      Thermocouple::Analog::readSpecificTemperatureData(5, farrbconvert.sensorReadings);
+      farrbconvert.sensorReadings[0] = Thermocouple::Analog::readSpecificTemperatureData(5);
       farrbconvert.sensorReadings[1] = propGemsHeater.controlTemp(farrbconvert.sensorReadings[0]); // heater is not used for waterflows.
-      farrbconvert.sensorReadings[2] = -1;
+      farrbconvert.sensorReadings[2] = propGemsHeater.readCurrentDraw();
+      farrbconvert.sensorReadings[3] = propGemsHeater.readBusVoltage();
+      farrbconvert.sensorReadings[4] = -1;
       break;
     case 16:
       debug("prop tank pt");
-      Thermocouple::Analog::readSpecificTemperatureData(4, farrbconvert.sensorReadings);
+      farrbconvert.sensorReadings[0] = Thermocouple::Analog::readSpecificTemperatureData(4);
       farrbconvert.sensorReadings[1] = propTankPTHeater.controlTemp(farrbconvert.sensorReadings[0]); // heater is not used for waterflows.
-      farrbconvert.sensorReadings[2] = -1;
+      farrbconvert.sensorReadings[2] = propTankPTHeater.readCurrentDraw();
+      farrbconvert.sensorReadings[3] = propTankPTHeater.readBusVoltage();
+      farrbconvert.sensorReadings[4] = -1;
       break;
     case 17:
       debug("static P");
@@ -355,19 +354,27 @@ void sensorReadFunc(int id) {
       break;
     case 19:
       debug("lox injector");
-      Thermocouple::Analog::readSpecificTemperatureData(2, farrbconvert.sensorReadings);
+      farrbconvert.sensorReadings[0] = Thermocouple::Analog::readSpecificTemperatureData(2);
       farrbconvert.sensorReadings[1] = loxInjectorPTHeater.controlTemp(farrbconvert.sensorReadings[0]); // heater is not used for waterflows.
-      farrbconvert.sensorReadings[2] = -1;
+      farrbconvert.sensorReadings[2] = loxInjectorPTHeater.readCurrentDraw();
+      farrbconvert.sensorReadings[3] = loxInjectorPTHeater.readBusVoltage();
+      farrbconvert.sensorReadings[4] = -1;
       break;
     case 21:
       debug("solenoid currents");
       Solenoids::getAllCurrents(farrbconvert.sensorReadings);
       break;
+    case 22:
+      debug("solenoid voltages");
+      Solenoids::getAllVoltages(farrbconvert.sensorReadings);
+      break;
     case 60:
       debug("Prop Injector");
-      Thermocouple::Analog::readSpecificTemperatureData(3, farrbconvert.sensorReadings);
+      farrbconvert.sensorReadings[0] = Thermocouple::Analog::readSpecificTemperatureData(3);
       farrbconvert.sensorReadings[1] = propInjectorPTHeater.controlTemp(farrbconvert.sensorReadings[0]); // heater is not used for waterflows.
-      farrbconvert.sensorReadings[2] = -1;
+      farrbconvert.sensorReadings[2] = propInjectorPTHeater.readCurrentDraw();
+      farrbconvert.sensorReadings[3] = propInjectorPTHeater.readBusVoltage();
+      farrbconvert.sensorReadings[4] = -1;
       break;
     default:
       Serial.println("some other sensor");

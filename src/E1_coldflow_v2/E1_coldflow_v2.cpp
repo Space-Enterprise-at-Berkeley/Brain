@@ -90,7 +90,7 @@ void setup() {
   debug("Initializing Libraries");
 
   debug("Initializing Solenoids");
-  Solenoids::init(numSolenoids, solenoidPins, numSolenoidCommands, solenoidCommandIds);
+  Solenoids::init(numSolenoids, solenoidPins, numSolenoidCommands, solenoidCommandIds, solenoidINAAddrs, &Wire1, actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
   debug("Initializing battery monitor");
   // batteryMonitor::init(&Wire, batteryMonitorShuntR, batteryMonitorMaxExpectedCurrent, battMonINAAddr);
   debug("Initializing power supply monitors");

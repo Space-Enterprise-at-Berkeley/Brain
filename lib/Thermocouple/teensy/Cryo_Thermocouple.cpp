@@ -24,9 +24,9 @@ namespace Thermocouple {
           return -1;
         }
 
-        _cryo_amp_boards[i].setADCresolution(MCP9600_ADCRESOLUTION_12);
+        _cryo_amp_boards[i].setADCresolution(MCP9600_ADCRESOLUTION_16);
         _cryo_amp_boards[i].setThermocoupleType(types[i]);
-        _cryo_amp_boards[i].setFilterCoefficient(3);
+        _cryo_amp_boards[i].setFilterCoefficient(0);
         _cryo_amp_boards[i].enable(true);
       }
 
@@ -41,8 +41,43 @@ namespace Thermocouple {
 
       return 0;
     }
+    
+
+    int Cryo::lowerI2CSpeed(TwoWire *theWire) {
+      // Need to lower the I2C clock frequency
+      /* START SET I2C CLOCK FREQ */
+      #define CLOCK_STRETCH_TIMEOUT 15000
+      IMXRT_LPI2C_t *port;
+      if (theWire == &Wire) {
+        port = &IMXRT_LPI2C1;
+      } else if (theWire == &Wire1) {
+        port = &IMXRT_LPI2C3;
+      } else if (theWire == &Wire2) {
+        port = &IMXRT_LPI2C4;
+      } else {
+        Serial.println("Cryo::lowerI2CSpeed - ERROR: UNRECOGNIZED WIRE OBJECT. MUST BE Wire, Wire1, or Wire2");
+        return -1;
+        _lowerI2CSpeed = false;
+      }
+      port->MCCR0 = LPI2C_MCCR0_CLKHI(55) | LPI2C_MCCR0_CLKLO(59) |
+        LPI2C_MCCR0_DATAVD(25) | LPI2C_MCCR0_SETHOLD(40);
+      port->MCFGR1 = LPI2C_MCFGR1_PRESCALE(2);
+      port->MCFGR2 = LPI2C_MCFGR2_FILTSDA(5) | LPI2C_MCFGR2_FILTSCL(5) |
+        LPI2C_MCFGR2_BUSIDLE(3000); // idle timeout 250 us
+      port->MCFGR3 = LPI2C_MCFGR3_PINLOW(CLOCK_STRETCH_TIMEOUT * 12 / 256 + 1);
+      port->MCCR1 = port->MCCR0;
+      port->MCFGR0 = 0;
+      port->MFCR = LPI2C_MFCR_RXWATER(1) | LPI2C_MFCR_TXWATER(1);
+      port->MCR = LPI2C_MCR_MEN;
+      /* END SET I2C CLOCK FREQ */
+      _lowerI2CSpeed = true;
+      return 0;
+    }
 
     void Cryo::readCryoTemps(float *data) {
+      if (!_lowerI2CSpeed) {
+        Serial.println("Cryo-Thermocouples - WARNING: Not using lower I2C bus speed. Make sure to call 'Cryo::lowerI2CSpeed' during setup");
+      }
       #ifdef DEBUG
       Serial.println("read Cryo temps");
       Serial.flush();
@@ -52,8 +87,8 @@ namespace Thermocouple {
         Serial.print(i);
         Serial.flush();
         #endif
-        // data[i] = _cryo_amp_boards[i].readThermocouple();
-        data[i] = _cryo_amp_boards[i].readAmbient();
+        data[i] = _cryo_amp_boards[i].readThermocouple();
+        // data[i] = _cryo_amp_boards[i].readAmbient();
         // data[i] = _cryo_amp_boards[i].readADC();
         #ifdef DEBUG
         Serial.print(data[i]);

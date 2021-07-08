@@ -33,8 +33,8 @@ class TempController {
     int8_t _channel;
 
   protected:
-    bool humanOverride = false;
-    uint16_t humanSpecifiedValue = 300;
+    bool humanOverride = true;
+    uint16_t humanSpecifiedValue = 0;
     INA219 outputMonitor;
     bool inaExists = false;
 
@@ -73,6 +73,15 @@ class HeaterCommand : public Command, public TempController {
       inaExists = false;
     }
 
+
+    HeaterCommand(std::string name, uint8_t id, int tempSetPoint, int algorithmChoice, GpioExpander * expander, int8_t channel, TwoWire *wire, uint8_t inaAddr, float shuntR, float maxExpectedCurrent):
+      Command(name, id),
+      TempController(tempSetPoint, algorithmChoice, expander, channel)
+    {
+      initINA219(wire, inaAddr, shuntR, maxExpectedCurrent);
+      inaExists = true;
+    }
+
     HeaterCommand(std::string name, int tempSetPoint, int algorithmChoice, int heaterPin, TwoWire *wire, uint8_t inaAddr, float shuntR, float maxExpectedCurrent):
       Command(name),
       TempController(tempSetPoint, algorithmChoice, heaterPin)
@@ -103,20 +112,24 @@ class HeaterCommand : public Command, public TempController {
       data[1] = (humanOverride)? humanSpecifiedValue : -1;
       if(inaExists){
         data[2] = outputMonitor.readShuntCurrent();
+        data[3] = outputMonitor.readBusVoltage();
       } else {
         data[2] = -1;
       }
-      data[3] = -1;
+      data[4] = -1;
     }
 
-    void readCurrentDraw(float *data, int ch) {
-      data[ch] = outputMonitor.readShuntCurrent();
-      data[ch+1] = -1;
+    float readCurrentDraw() {
+      return outputMonitor.readShuntCurrent();
+    }
+
+    float readBusVoltage() {
+      return outputMonitor.readBusVoltage();
     }
 
     void initINA219(TwoWire *wire, uint8_t inaAddr, float shuntR, float maxExpectedCurrent) {
       outputMonitor.begin(wire, inaAddr);
-      outputMonitor.configure(INA219_RANGE_16V, INA219_GAIN_40MV, INA219_BUS_RES_12BIT, INA219_SHUNT_RES_12BIT_1S);
+      outputMonitor.configure(INA219_RANGE_32V, INA219_GAIN_40MV, INA219_BUS_RES_12BIT, INA219_SHUNT_RES_12BIT_1S);
       outputMonitor.calibrate(shuntR, maxExpectedCurrent);
     }
 };

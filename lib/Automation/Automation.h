@@ -133,6 +133,7 @@ extern struct autoEventList _eventList;
   // action functions that combine multiple valve openings/closing simultaneously
   int act_pressurizeTanks();
   int act_openGems();
+  int act_closeGems();
   int act_armOpenLox();
   int act_armOpenProp();
   int act_armOpenBoth();

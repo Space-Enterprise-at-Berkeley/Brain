@@ -11,6 +11,8 @@ void setup() {
   Serial.begin(9600);
   delay(1000);
 
+  Wire1.begin();
+
   sensor.init(LTC4151::F, LTC4151::F, &Wire1);
 }
 

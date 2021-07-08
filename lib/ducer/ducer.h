@@ -52,7 +52,7 @@ namespace Ducers {
   }
 
   float propStaticP(float propDomeP, float highP) {
-    return -20.08 + 1.413 * propDomeP + 0.02343 * highP;
+    return -20.08 + 1.413 * propDomeP + 0.002343 * highP;
   }
 
   float interpolateHigh(long rawValue) { //5k psi sensor
@@ -86,6 +86,21 @@ namespace Ducers {
     return convertedValue;
   }
 
+
+  float interpolate(long rawValue, int ptType) { // 300 psi sensor
+    double values[2][2] = { // [x, y] pairs
+      {6553,  0},
+      {58982, (double) ptType}
+    };
+    // return std::lerp(-123.89876445934394, 1131.40825, (double) rawValue / 64901);
+    float upperBound = values[1][0];
+    float lowerBound = values[0][0];
+    float upperBoundPressure = values[1][1];
+    float lowerBoundPressure = values[0][1];
+    float proportion = (rawValue - lowerBound)/(upperBound - lowerBound);
+    float convertedValue = proportion * (upperBoundPressure - lowerBoundPressure) + lowerBoundPressure;
+    return convertedValue;
+  }
 
   float interpolate300(long rawValue) { // 300 psi sensor
     double values[2][2] = { // [x, y] pairs
@@ -168,6 +183,12 @@ namespace Ducers {
           Serial.flush();
         #endif
         data[i] = interpolate30(_adcs[_adcIndices[i]]->readData(_adcChannels[i]));
+      } else if (type == 150) {
+        #ifdef DEBUG
+          Serial.println("reading 30 pressure data from ADC" + String(_adcIndices[i]) + " Ain" + String(_adcChannels[i]));
+          Serial.flush();
+        #endif
+        data[i] = interpolate(_adcs[_adcIndices[i]]->readData(_adcChannels[i]), type);
       }
       _latestReads[i] = data[i];
     }

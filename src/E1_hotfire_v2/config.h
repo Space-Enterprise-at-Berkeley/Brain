@@ -67,11 +67,7 @@ const uint8_t numSolenoids = 8;   // l2, l5, lg, p2, p5, pg, h, h enable
 uint8_t solenoidPins[numSolenoids] = {5,  3,  1,  4,  2,  0, 6, 39};
 const uint8_t numSolenoidCommands = 10;    //       l2, l5, lg, p2, p5, pg,  h, arm, launch , h enable
 uint8_t solenoidCommandIds[numSolenoidCommands] = {20, 21, 22, 23, 24, 25, 26,  27, 28     , 31};
-
-const uint8_t loxAdapterPTHeaterPin = 7;
-const uint8_t loxGemsHeaterPin = 7;
-const uint8_t propAdapterPTHeaterPin = 7;
-const uint8_t propGemsHeaterPin = 7;
+uint8_t solenoidINAAddrs[numSolenoids] = {0x40, 0x42, 0x44, 0x41, 0x43, 0x45};
 
 const float batteryMonitorShuntR = 0.002; // ohms
 const float batteryMonitorMaxExpectedCurrent = 10; // amps
@@ -79,20 +75,31 @@ const float batteryMonitorMaxExpectedCurrent = 10; // amps
 const float powerSupplyMonitorShuntR = 0.010; // ohms
 const float powerSupplyMonitorMaxExpectedCurrent = 5; // amps
 
-HeaterCommand loxPTHeater("LOX PT Heater", 40, 10, 2, loxAdapterPTHeaterPin); // setPoint = 10 C, alg = PID
-HeaterCommand loxGemsHeater("LOX Gems Heater", 41, 10, 2, loxGemsHeaterPin); // setPoint = 10C, alg = PID
-HeaterCommand propPTHeater("Prop PT Heater", 42, 10, 2, propAdapterPTHeaterPin); // setPoint = 10 C, alg = PID
-HeaterCommand propGemsHeater("Prop Gems Heater", 43, 10, 2, propGemsHeaterPin); // setPoint = 10C, alg = PID
+const float actuatorMonitorShuntR = 0.033; // ohms
+
+// Heaters
+const uint8_t numHeaters = 6;
+uint8_t heaterChannels[numHeaters] = {2, 3, 1, 0, 4, 5};
+uint8_t heaterCommandIds[numHeaters] = {40, 41, 42, 43, 44, 45};
+uint8_t heaterINAAddr[numHeaters] = {0x4B, 0x4C, 0x4A, 0x49, 0x4D, 0x4E};
+
+HeaterCommand loxTankPTHeater("loxTankPTHeater", heaterCommandIds[0], 10, 2, &heaterCtl, heaterChannels[0], &Wire1, heaterINAAddr[0], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
+HeaterCommand loxGemsHeater("loxGemsHeater", heaterCommandIds[1], 10, 2, &heaterCtl, heaterChannels[1], &Wire1, heaterINAAddr[1], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
+HeaterCommand propTankPTHeater("propTankPTHeater", heaterCommandIds[2], 10, 2, &heaterCtl, heaterChannels[2], &Wire1, heaterINAAddr[2], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
+HeaterCommand propGemsHeater("propGemsHeater", heaterCommandIds[3], 10, 2, &heaterCtl, heaterChannels[3], &Wire1, heaterINAAddr[3], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
+HeaterCommand loxInjectorPTHeater("loxInjectorPTHeater", heaterCommandIds[4], 10, 2, &heaterCtl, heaterChannels[4], &Wire1, heaterINAAddr[4], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
+HeaterCommand propInjectorPTHeater("propInjectorPTHeater", heaterCommandIds[5], 10, 2, &heaterCtl, heaterChannels[5], &Wire1, heaterINAAddr[5], actuatorMonitorShuntR, powerSupplyMonitorMaxExpectedCurrent);
 
 AutomationSequenceCommand fullFlow("Perform Flow", 29, &(Automation::beginBothFlow), &(Automation::endBothFlow));
 AutomationSequenceCommand loxFlow("Perform LOX Flow", 30, &(Automation::beginLoxFlow), &(Automation::endLoxFlow));
 AutomationSequenceCommand hotFire("Perform Hotfire", 32, &(Automation::beginHotfire), &(Automation::endHotfire));
 
-const uint8_t numCommands = 16;
+const uint8_t numCommands = 18;
 Command *backingStore[numCommands] = {&Solenoids::lox_2,  &Solenoids::lox_5,  &Solenoids::lox_G,
                                         &Solenoids::prop_2, &Solenoids::prop_5, &Solenoids::prop_G,
                                         &Solenoids::high_p, &Solenoids::high_p_enable, &Solenoids::arm_rocket, &Solenoids::launch,
-                                        &fullFlow, &loxFlow, &loxPTHeater, &loxGemsHeater, &propPTHeater, &propGemsHeater};
+                                        &fullFlow, &loxFlow, &loxTankPTHeater, &loxGemsHeater, &loxInjectorPTHeater, &propTankPTHeater,
+                                        &propGemsHeater, &propInjectorPTHeater};
 CommandArray commands(numCommands, backingStore);
 
 namespace config {
